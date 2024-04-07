@@ -25,7 +25,7 @@ char* getFileName(int i) {
 void sendFile(int client_socket, char* filename) {
 	char buffer[BUFFER_SIZE];
 	size_t bytesRead;
-	
+
 	FILE *file = fopen(filename, "rb");
 	if (file == NULL) {
 		perror("Opening file failed");
@@ -45,7 +45,7 @@ void sendResponse(int client_socket, int i) {
 	long fsize;
 	char buffer[BUFFER_SIZE];
 	size_t bytesRead;
-	printf("111");
+
 	fileName = getFileName(i);
 
 	FILE *file = fopen(fileName, "rb");
@@ -54,21 +54,13 @@ void sendResponse(int client_socket, int i) {
 		exit(EXIT_FAILURE);
 	}
 
-	printf("1");
-
 	fseek(file, 0, SEEK_END);
 	fsize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	
-	printf("2");
-
 	sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\nContent-Length: %ld\r\n\r\n", fsize);
-	
-	printf("3");
 
 	send(client_socket, response, sizeof(response), 0);
-
-	printf("4");
 
 	while ((bytesRead = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
 		send(client_socket, buffer, bytesRead, 0);
@@ -77,6 +69,53 @@ void sendResponse(int client_socket, int i) {
 	fclose(file);
 }
 
+void requestHandle(int client_socket, char* request) {
+	char method[10], path[20];
+	FILE* file;
+	long fsize;
+	int option;
+	char buffer[BUFFER_SIZE];
+	char response[BUFFER_SIZE];
+	size_t bytesRead;
+
+	sscanf(request, "%s %s", method, path);
+
+	if (strcmp(path, "/")) {
+		file = fopen("index.html", "rb");
+		option = 0;
+	}
+	else if (strcmp(path, "/1")) {
+		file = fopen("1.jpg", "rb");
+		option = 1;
+	}
+
+	if (file == NULL) {
+		perror("Opening file failed");
+		exit(EXIT_FAILURE);
+	}
+
+	fseek(file, 0, SEEK_END);
+	fsize = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	switch(option) {
+		case 0:
+			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n", fsize);
+			break;
+		case 1:
+			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\nContent-Length: %ld\r\n\r\n", fsize);
+			break;
+	}
+
+	send(client_socket, response, sizeof(response), 0);
+	
+	while ((bytesRead = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
+		send(client_socket, buffer, bytesRead, 0);
+	}
+
+	fclose(file);
+
+}
 
 int main(int argc, char* argv[]) {
     const char* server_ip = "192.168.56.106";
@@ -120,14 +159,15 @@ int main(int argc, char* argv[]) {
         recv(client_socket, request, sizeof(request), 0);
         printf("Received request:\n%s\n", request);
 		
-//        char response[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nHello, World!";
+//      char response[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nHello, World!";
 		
-		char response[] = "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n\r\n";
-        send(client_socket, response, sizeof(response), 0);
+//		char response[] = "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n\r\n";
+//      send(client_socket, response, sizeof(response), 0);
 
-		fileName = getFileName(1);
-		sendFile(client_socket, fileName);
+//		fileName = getFileName(1);
+//		sendFile(client_socket, fileName);
 //		sendResponse(client_socket, 1);
+		requestHandle(client_socket, request);
 
         close(client_socket);
     }
