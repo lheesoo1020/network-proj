@@ -20,36 +20,72 @@ void requestHandle(int client_socket, char* request) {
     sscanf(request, "%s %s", method, path);
 
 	if (!strcmp(path, "/")) {
-		file = fopen("index.html", "rb");
+	    file = fopen("index.html", "rb");
 		option = 0;
 	}
 	else if (!strcmp(path, "/1")) {
-		file = fopen("1.jpg", "rb");
+		file = fopen("1.html", "rb");
 		option = 1;
 	}
+    else if (!strcmp(path, "/2")) {
+        file = fopen("2.gif", "rb");
+        option = 2;
+    }
+    else if (!strcmp(path, "/3")) {
+        file = fopen("3.jpeg", "rb");
+        option = 3;
+    }
+    else if (!strcmp(path, "/4")) {
+        file = fopen("4.mp3", "rb");
+        option = 4;
+    }
+    else if (!strcmp(path, "/5")) {
+        file = fopen("5.pdf", "rb");
+        option = 5;
+    }
+    else {
+        option = -1;
+    }
 
 	if (file == NULL) {
 		perror("Opening file failed");
 		exit(EXIT_FAILURE);
 	}
-
-	fseek(file, 0, SEEK_END);
-	fsize = ftell(file);
-	fseek(file, 0, SEEK_SET);
+    
+    fseek(file, 0, SEEK_END);
+    fsize = ftell(file);
+    fseek(file, 0, SEEK_SET);
 
 	switch(option) {
+        case -1:
+            sprintf(response, "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n");
+            break;
 		case 0:
 			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n", fsize);
 			break;
 		case 1:
-			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\nContent-Length: %ld\r\n\r\n", fsize);
+			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n", fsize);
 			break;
+        case 2:
+            sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\nContent-Length: %ld\r\n\r\n", fsize);
+            break;
+        case 3:
+            sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\nContent-Length: %ld\r\n\r\n", fsize);
+            break;
+        case 4:
+            sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: audio/mpeg\r\nContent-Length: %ld\r\n\r\n", fsize);
+            break;
+        case 5:
+            sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\nContent-Length: %ld\r\n\r\n", fsize);
+            break;
 	}
 
-	send(client_socket, response, strlen(response), 0);	
-	while ((bytesRead = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
-		send(client_socket, buffer, bytesRead, 0);
-	}
+	send(client_socket, response, strlen(response), 0);
+    if (option >= 0) {
+	    while ((bytesRead = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
+		    send(client_socket, buffer, bytesRead, 0);
+	    }
+    }
 
 	fclose(file);
 
