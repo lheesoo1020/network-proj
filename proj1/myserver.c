@@ -6,7 +6,7 @@
 #include <fcntl.h>
 
 #define BUFFER_SIZE 1024
-
+#define BACKLOG 10
 
 void requestHandle(int client_socket, char* request) {
     char method[10], path[20];
@@ -46,15 +46,17 @@ void requestHandle(int client_socket, char* request) {
     else {
         option = -1;
     }
-
-	if (file == NULL) {
-		perror("Opening file failed");
-		exit(EXIT_FAILURE);
-	}
+	
+	if (option >= 0) {
+		if (file == NULL) {
+			perror("Opening file failed");
+			exit(EXIT_FAILURE);
+		}
     
-    fseek(file, 0, SEEK_END);
-    fsize = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    	fseek(file, 0, SEEK_END);
+    	fsize = ftell(file);
+    	fseek(file, 0, SEEK_SET);
+	}
 
 	switch(option) {
         case -1:
@@ -85,16 +87,15 @@ void requestHandle(int client_socket, char* request) {
 	    while ((bytesRead = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
 		    send(client_socket, buffer, bytesRead, 0);
 	    }
+		fclose(file);
     }
-
-	fclose(file);
 
 }
 
 int main(int argc, char* argv[]) {
-    int server_port = atoi(argv[1]);    //첫번째 인자를 포트로 설정
+    int server_port = atoi(argv[1]);
 
-    int server_socket = socket(AF_INET, SOCK_STREAM, 0);    //서버 socket 생성
+    int server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
         perror("Socket creation failed");
         return 1;
@@ -103,13 +104,13 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in server_addr, client_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(server_port);  
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);    //가능한 모든 IP
-    if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {   //socket 바인딩
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
         perror("Binding failed");
         return 1;
     }
 
-    if (listen(server_socket, 5) == -1) {   //
+    if (listen(server_socket, BACKLOG) == -1) {
         perror("Listening failed");
         return 1;
     }
