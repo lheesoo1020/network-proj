@@ -92,10 +92,9 @@ void requestHandle(int client_socket, char* request) {
 }
 
 int main(int argc, char* argv[]) {
-    const char* server_ip = "10.0.2.15";
-    int server_port = atoi(argv[1]);
+    int server_port = atoi(argv[1]);    //첫번째 인자를 포트로 설정
 
-    int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    int server_socket = socket(AF_INET, SOCK_STREAM, 0);    //서버 socket 생성
     if (server_socket == -1) {
         perror("Socket creation failed");
         return 1;
@@ -103,19 +102,19 @@ int main(int argc, char* argv[]) {
 
     struct sockaddr_in server_addr, client_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(server_port);
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+    server_addr.sin_port = htons(server_port);  
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);    //가능한 모든 IP
+    if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {   //socket 바인딩
         perror("Binding failed");
         return 1;
     }
 
-    if (listen(server_socket, 5) == -1) {
+    if (listen(server_socket, 5) == -1) {   //
         perror("Listening failed");
         return 1;
     }
 
-    printf("Server listening on %s:%d\n", server_ip, server_port);
+    printf("Server listening on port %d\n", server_port);
 
     while (1) {
         socklen_t client_addr_len = sizeof(client_addr);
