@@ -9,51 +9,48 @@
 #define BACKLOG 10
 
 void requestHandle(int client_socket, char* request) {
-    char method[10], path[20];      //요청 method와 타겟을 담을 변수
+    char method[10], path[30];      //요청 method와 파일 경로;
     FILE* file;     //파일에 대한 포인터
     long fsize;     //파일의 크기
     int option;     //현재 어떤 파일을 열었는지 표시
     char buffer[BUFFER_SIZE];   //파일 전송을 위한 버퍼
     char response[BUFFER_SIZE]; //응답
     size_t bytesRead;   //파일 전송 추적을 위한 변수
+    char* extention;   //파일 확장자
 
     sscanf(request, "%s %s", method, path); //start-line에서 필요한 정보를 읽어온다.
+    
+    extention = strdup(path);
+    strsep(extention, ".");     //파일의 확장자만 가리키도록 포인터 이동
 
     /*
      * 클라이언트의 요청에 따라 다른 파일을 가져온다.
      * 파일에 따라 option 설정, 없는 파일이면 -1
      */
-	if (!strcmp(path, "/")) {
-	    file = fopen("index.html", "rb");
-		option = 0;
-	}
-	else if (!strcmp(path, "/1")) {
-		file = fopen("1.html", "rb");
+	if (!strcmp(extention, "html")) {
 		option = 1;
 	}
-    else if (!strcmp(path, "/2")) {
-        file = fopen("2.gif", "rb");
-        option = 2;
-    }
-    else if (!strcmp(path, "/3")) {
-        file = fopen("3.jpeg", "rb");
+	else if (!strcmp(extention, "gif")) {
+		option = 2;
+	}
+    else if (!strcmp(extention, "jpeg") || !strcmp(extention, "jpg")) {
         option = 3;
     }
-    else if (!strcmp(path, "/4")) {
-        file = fopen("4.mp3", "rb");
+    else if (!strcmp(extention, "mp3")) {
         option = 4;
     }
-    else if (!strcmp(path, "/5")) {
-        file = fopen("5.pdf", "rb");
+    else if (!strcmp(extention, "pdf")) {
         option = 5;
     }
     else {
         option = -1;
     }
+
+    file = fopen(path, "rb");
     /*
      * 파일 크기 계산
      */
-	if (option >= 0) {
+	if (option > 0) {
 		if (file == NULL) {
 			perror("Opening file failed");
 			exit(EXIT_FAILURE);
@@ -71,22 +68,19 @@ void requestHandle(int client_socket, char* request) {
         case -1:
             sprintf(response, "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n");
             break;
-		case 0:
-			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n", fsize);
-			break;
 		case 1:
 			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n", fsize);
 			break;
-        case 2:
-            sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\nContent-Length: %ld\r\n\r\n", fsize);
-            break;
+		case 2:
+			sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\nContent-Length: %ld\r\n\r\n", fsize);
+			break;
         case 3:
             sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\nContent-Length: %ld\r\n\r\n", fsize);
             break;
         case 4:
             sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: audio/mpeg\r\nContent-Length: %ld\r\n\r\n", fsize);
             break;
-        case 5:
+        case 4:
             sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\nContent-Length: %ld\r\n\r\n", fsize);
             break;
 	}
