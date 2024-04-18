@@ -59,12 +59,13 @@ void requestHandle(int client_socket, char* request) {
 		file = fopen(filename, "rb");
 		if (file == NULL) {
 			perror("Opening file failed");
-			exit(EXIT_FAILURE);
+			option = 0;
+		} 
+		else {
+    		fseek(file, 0, SEEK_END);
+    		fsize = ftell(file);
+    		fseek(file, 0, SEEK_SET);
 		}
-    
-    	fseek(file, 0, SEEK_END);
-    	fsize = ftell(file);
-    	fseek(file, 0, SEEK_SET);
 	}
 
     /* 
