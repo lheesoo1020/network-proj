@@ -30,7 +30,7 @@ void requestHandle(int client_socket, char* request) {
 
     /*
      * 요청받은 파일을 연다.
-     * 파일이 있는 경우 크기를 계산하고 파일 확장자를 저장한다.
+     * 파일이 있는 경우 크기를 계산하고 extention이 파일 확장자를 가리키게 한다.
      */
     file = fopen(filename, "rb");
     if (file == NULL) {
