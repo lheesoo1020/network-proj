@@ -23,9 +23,19 @@ void requestHandle(int client_socket, char* request) {
     sscanf(request, "%s %s", method, path); //start-line에서 필요한 정보를 읽어온다.
 	filename = strdup(path);
 	filename += strspn(filename, "/");
-	if (strlen(filename) > 0 && strchr(filename, '.') != NULL) {
+
+    file = fopen(filename, "rb");
+    if (file == NULL) {
+        perror("Opening file failed");
+    }
+    else {
+        fseek(file, 0, SEEK_END);
+        fsize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
 		extention = strchr(filename, '.') + 1;
-	}
+    }
+
 	
     /*
      * 클라이언트의 요청에 따라 다른 파일을 가져온다.
@@ -52,21 +62,6 @@ void requestHandle(int client_socket, char* request) {
     else {
         option = 0;
     }
-    /*
-     * 파일 크기 계산
-     */
-	if (option > 0) {
-		file = fopen(filename, "rb");
-		if (file == NULL) {
-			perror("Opening file failed");
-			option = 0;
-		} 
-		else {
-    		fseek(file, 0, SEEK_END);
-    		fsize = ftell(file);
-    		fseek(file, 0, SEEK_SET);
-		}
-	}
 
     /* 
      * option 값에 따라 응답 헤더 작성
