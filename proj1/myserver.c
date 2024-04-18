@@ -9,10 +9,10 @@
 #define BACKLOG 10
 
 void requestHandle(int client_socket, char* request) {
-    char method[10];
-	char path[20];      //요청 method와 파일 경로;
-	char* filename;
-	char* extention = NULL;
+    char method[10];    //요청 메소드
+	char path[20];      //파일 경로
+	char* filename;     //파일명
+	char* extention = NULL; //파일 확장자
     FILE* file;     //파일에 대한 포인터
     long fsize;     //파일의 크기
     int option;     //현재 어떤 파일을 열었는지 표시
@@ -21,9 +21,17 @@ void requestHandle(int client_socket, char* request) {
     size_t bytesRead;   //파일 전송 추적을 위한 변수
 
     sscanf(request, "%s %s", method, path); //start-line에서 필요한 정보를 읽어온다.
+    
+    /*
+     * 요청 path의 맨 앞 '/' 제거
+     */
 	filename = strdup(path);
 	filename += strspn(filename, "/");
 
+    /*
+     * 요청받은 파일을 연다.
+     * 파일이 있는 경우 크기를 계산하고 파일 확장자를 저장한다.
+     */
     file = fopen(filename, "rb");
     if (file == NULL) {
         perror("Opening file failed");
@@ -38,8 +46,8 @@ void requestHandle(int client_socket, char* request) {
 
 	
     /*
-     * 클라이언트의 요청에 따라 다른 파일을 가져온다.
-     * 파일에 따라 option 설정, 없는 파일이면 -1
+     * 파일의 확장자에 따라 option 설정.
+     * 없는 파일이거나(extention = NULL) html, gif, jpg, mp3, pdf 이외의 확장자면 0으로 설정
      */
 	if (extention == NULL) {
 		option = 0;
@@ -64,7 +72,8 @@ void requestHandle(int client_socket, char* request) {
     }
 
     /* 
-     * option 값에 따라 응답 헤더 작성
+     * option 값에 따라 Content-Type을 다르게 응답 헤더 작성
+     * 0인 경우 404 Not Found
      */
 	switch(option) {
 		case 0:
